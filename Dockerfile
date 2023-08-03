@@ -2,7 +2,7 @@
 FROM php:7.4-apache
 
 # Copy the PHP application code to the container's web server directory
-COPY ./ /var/www/html/
+COPY / /var/www/html/
 
 # Expose the container's port 80 to the host
 EXPOSE 80

@@ -27,7 +27,7 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        password: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           # Stop and remove the previous running container
           #docker stop php7.4_13_4_2022 || true

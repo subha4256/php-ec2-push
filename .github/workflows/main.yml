@@ -1,25 +1,4 @@
-Skip to content
-subha4256
-/
-php-ec2-push
 
-Type / to search
-
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-Settings
-Deploy to EC2
-Update main.yml #16
-Jobs
-Run details
-Workflow file for this run
-.github/workflows/main.yml at e3e47b9
 name: Deploy to EC2
 
 on:

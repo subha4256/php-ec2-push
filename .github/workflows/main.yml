@@ -30,11 +30,11 @@ jobs:
         password: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           # Stop and remove the previous running container
-          #docker stop php7.4_13_4_2022 || true
-          #docker rm php7.4_13_4_2022 || true
+          docker stop php7.4_13_4_2022 || true
+          docker rm php7.4_13_4_2022 || true
 
           # Delete the previous image
-          #docker rmi azuresubha/php7.4_13_4_2022:previous || true
+          docker rmi azuresubha/php7.4_13_4_2022:previous || true
 
           # Pull and run the updated image
           docker pull azuresubha/php7.4_13_4_2022:latest

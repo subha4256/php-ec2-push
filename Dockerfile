@@ -11,7 +11,7 @@ RUN apt-get update && \
 COPY / /var/www/html/
 # Copy Apache configuration file from host to container
 COPY /home/ubuntu/apache_config.conf /etc/apache2/sites-available/000-default.conf
-COPY /home/ubuntu/apache_configssl.conf /etc/apache2/sites-available/default-ssl.conf
+COPY /home/ubuntu/apache_config_ssl.conf /etc/apache2/sites-available/default-ssl.conf
 # Enable Apache modules
 RUN a2enmod rewrite
 RUN a2enmod ssl

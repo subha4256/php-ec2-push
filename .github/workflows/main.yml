@@ -18,7 +18,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: yourusername/php-app:${{ github.sha }}
+        tags: yourusername/php-app:latest  # You can use any fixed tag or a custom tag here
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
@@ -27,7 +27,13 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
+          # Stop and remove the previous running container
           docker stop php-app || true
           docker rm php-app || true
-          docker pull yourusername/php-app:${{ github.sha }}
-          docker run -d -p 80:80 --name php-app yourusername/php-app:${{ github.sha }}
+
+          # Delete the previous image
+          docker rmi yourusername/php-app:previous || true
+
+          # Pull and run the updated image
+          docker pull yourusername/php-app:latest  # Use the same tag as specified in the build-push step
+          docker run -d -p 80:80 --name php-app yourusername/php-app:latest

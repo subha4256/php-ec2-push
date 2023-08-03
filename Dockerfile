@@ -3,7 +3,7 @@ FROM php:7.4-apache
 
 # Install PHP extensions
 RUN apt-get update && \
-    apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zlib1g-dev libzip-dev libicu-dev && \
+    apt-get install -y nano libpng-dev libjpeg-dev libfreetype6-dev zlib1g-dev libzip-dev libicu-dev && \
     docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install gd pdo pdo_mysql zip intl
 

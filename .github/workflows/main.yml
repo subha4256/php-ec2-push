@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Build Docker image
       run: docker build -t azuresubha/phpwebsite01:latest .
@@ -19,16 +19,34 @@ jobs:
     - name: Install Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        trivy-version: '0.18.3'
+        version: '0.60.0'
         
     - name: Scan Docker image with Trivy
       id: trivy-scan
       run: |
-        trivy image --exit-code 1 --severity CRITICAL azuresubha/phpwebsite01:latest
-        if [ $? -ne 0 ]; then
-          echo "Vulnerabilities found in the image"
-          exit 1
-        fi
+        # Scan with detailed output but only fail on CRITICAL
+        trivy image --format table --exit-code 1 --severity CRITICAL azuresubha/phpwebsite01:latest
+
+    - name: Notify on failure
+      if: failure() && steps.trivy-scan.outcome == 'failure'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "🚨 Trivy Scan Failed for azuresubha/phpwebsite01"
+        to: subha4256@gmail.com
+        from: GitHub Actions
+        body: |
+          Trivy scan failed during CI/CD pipeline.
+          
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Workflow: ${{ github.workflow }}
+          
+          Please check the workflow run for details:
+          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
     - name: Log in to Docker Hub
       if: steps.trivy-scan.outcome == 'success'

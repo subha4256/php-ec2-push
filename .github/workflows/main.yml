@@ -16,7 +16,7 @@ jobs:
     - name: Build Docker image
       run: docker build -t azuresubha/phpwebsite01:latest .
 
-    - name: Run Trivy vulnerability scanner and create GitHub issues
+    - name: Run Trivy vulnerability scanner
       uses: knqyf263/trivy-issue-action@v0.0.6
       id: trivy-scan
       with:
@@ -26,6 +26,29 @@ jobs:
         ignore-unfixed: "true"
         format: "table"
         trivy-version: "0.60.0"
+
+    - name: Notify on Scan Success
+      if: success() && steps.trivy-scan.outcome == 'success'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "✅ Trivy Scan PASSED: azuresubha/phpwebsite01"
+        to: subha4256@gmail.com
+        from: GitHub Actions
+        body: |
+          🎉 No critical vulnerabilities detected in Docker image!
+          
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Run ID: ${{ github.run_id }}
+          
+          View successful workflow:
+          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Docker image pushed successfully.
 
     - name: Notify on Scan Failure
       if: failure() && steps.trivy-scan.outcome == 'failure'

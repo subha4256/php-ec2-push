@@ -11,26 +11,21 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.1.6
 
     - name: Build Docker image
       run: docker build -t azuresubha/phpwebsite01:latest .
 
-    - name: Setup Trivy (v0.60.0)
-      uses: aquasecurity/trivy-action@master
-      with:
-        version: '0.60.0'  # Explicitly specifying v0.60.0
-        
-    - name: Scan Docker image
+    - name: Run Trivy vulnerability scanner and create GitHub issues
+      uses: knqyf263/trivy-issue-action@v0.0.6
       id: trivy-scan
-      run: |
-        # Scan with table output, fail only on CRITICAL vulnerabilities
-        trivy image \
-          --format table \
-          --exit-code 1 \
-          --severity CRITICAL \
-          --ignore-unfixed \
-          azuresubha/phpwebsite01:latest
+      with:
+        image-ref: "azuresubha/phpwebsite01:latest"
+        exit-code: "1"
+        severity: "CRITICAL"
+        ignore-unfixed: "true"
+        format: "table"
+        trivy-version: "0.60.0"
 
     - name: Notify on Scan Failure
       if: failure() && steps.trivy-scan.outcome == 'failure'
@@ -40,15 +35,17 @@ jobs:
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "Trivy Scan FAILED: azuresubha/phpwebsite01"
+        subject: "❌ Trivy Scan FAILED: azuresubha/phpwebsite01"
         to: subha4256@gmail.com
         from: GitHub Actions
         body: |
-         Critical vulnerabilities detected in Docker image!
+          ⚠️ Critical vulnerabilities detected in Docker image!
           
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref }}
           Run ID: ${{ github.run_id }}
+          
+          GitHub Issue created for vulnerabilities.
           
           View failed workflow:
           https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

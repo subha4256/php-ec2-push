@@ -1,5 +1,4 @@
-
-name: Deploy to EC2
+name: Build, Scan, and Push to Docker Hub
 
 on:
   push:
@@ -7,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-scan-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,26 +14,26 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build Docker image
-      run: docker build -t azuresubha/phpwebsite01:latest  .
+      run: docker build -t azuresubha/phpwebsite01:latest .
+
+    - name: Install Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        trivy-version: '0.18.3'
+        
+    - name: Scan Docker image with Trivy
+      id: trivy-scan
+      run: |
+        trivy image --exit-code 1 --severity CRITICAL azuresubha/phpwebsite01:latest
+        if [ $? -ne 0 ]; then
+          echo "Vulnerabilities found in the image"
+          exit 1
+        fi
 
     - name: Log in to Docker Hub
+      if: steps.trivy-scan.outcome == 'success'
       run: docker login -u azuresubha -p ${{ secrets.DOCKER_PAT }}
 
     - name: Push Docker image
+      if: steps.trivy-scan.outcome == 'success'
       run: docker push azuresubha/phpwebsite01:latest
-
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        password: ${{ secrets.EC2_PRIVATE_KEY }}
-        script: |
-          # Stop and remove the previous running container
-          docker stop phpwebsite01 || true
-          docker rm phpwebsite01 || true
-          # Delete the previous image
-          docker rmi azuresubha/phpwebsite01:previous || true
-          # Pull and run the updated image
-          docker pull azuresubha/phpwebsite01:latest
-          docker run -d -p 80:80 --name phpwebsite01 azuresubha/phpwebsite01:latest

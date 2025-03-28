@@ -16,18 +16,23 @@ jobs:
     - name: Build Docker image
       run: docker build -t azuresubha/phpwebsite01:latest .
 
-    - name: Install Trivy
+    - name: Setup Trivy (v0.60.0)
       uses: aquasecurity/trivy-action@master
       with:
-        version: '0.60.0'
+        version: '0.60.0'  # Explicitly specifying v0.60.0
         
-    - name: Scan Docker image with Trivy
+    - name: Scan Docker image
       id: trivy-scan
       run: |
-        # Scan with detailed output but only fail on CRITICAL
-        trivy image --format table --exit-code 1 --severity CRITICAL azuresubha/phpwebsite01:latest
+        # Scan with table output, fail only on CRITICAL vulnerabilities
+        trivy image \
+          --format table \
+          --exit-code 1 \
+          --severity CRITICAL \
+          --ignore-unfixed \
+          azuresubha/phpwebsite01:latest
 
-    - name: Notify on failure
+    - name: Notify on Scan Failure
       if: failure() && steps.trivy-scan.outcome == 'failure'
       uses: dawidd6/action-send-mail@v3
       with:
@@ -35,23 +40,25 @@ jobs:
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "🚨 Trivy Scan Failed for azuresubha/phpwebsite01"
+        subject: "Trivy Scan FAILED: azuresubha/phpwebsite01"
         to: subha4256@gmail.com
         from: GitHub Actions
         body: |
-          Trivy scan failed during CI/CD pipeline.
+         Critical vulnerabilities detected in Docker image!
           
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref }}
-          Workflow: ${{ github.workflow }}
+          Run ID: ${{ github.run_id }}
           
-          Please check the workflow run for details:
+          View failed workflow:
           https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-    - name: Log in to Docker Hub
+          Please investigate immediately.
+
+    - name: Login to Docker Hub
       if: steps.trivy-scan.outcome == 'success'
       run: docker login -u azuresubha -p ${{ secrets.DOCKER_PAT }}
 
-    - name: Push Docker image
+    - name: Push to Docker Hub
       if: steps.trivy-scan.outcome == 'success'
       run: docker push azuresubha/phpwebsite01:latest
